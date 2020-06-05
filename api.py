@@ -7,6 +7,9 @@ import yfinance as yf
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
+sellingStatus = []
+
+#stop loss to be added
 
 def stocksToWatch():
     stockString = input("Enter the stocks to watch: ")
@@ -72,9 +75,28 @@ def buySignal(ticker):
 
 
 def sellSignal(ticker):
+    global sellingStatus
     currentPrice = fetchCurrentPrice(ticker)
     twentySMA = calculateSMA(20, ticker, currentPrice)
     tenSMA = calculateSMA(10, ticker, currentPrice)
+    try:
+        indexInfo = sellingStatus.index(ticker)
+        movingAverageStatus = sellingStatus[indexInfo]
+        twentySMAStatus = isBelowSMA(twentySMA, currentPrice)
+        if twentySMAStatus and movingAverageStatus["twentySMA"]:
+            sell(ticker)
+            sellingStatus[indexInfo]["twentySMA"] = False
+        elif not twentySMAStatus:
+            sellingStatus[indexInfo]["twentySMA"] = True
+        tenSMAStatus = isBelowSMA(tenSMA, currentPrice)
+        if tenSMAStatus and movingAverageStatus["tenSMA"]:
+            sell(ticker)
+            sellingStatus[indexInfo]["tenSMA"] = False
+        elif not tenSMAStatus:
+            sellingStatus[indexInfo]["tenSMA"] = True
+    except ValueError:
+        movingAverageStatus = {"twentySMA": False, "tenSMA": False}
+        sellingStatus.append(movingAverageStatus)
 
 
 def isBelowSMA(movingAverage, currentPrice):
