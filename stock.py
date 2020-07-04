@@ -22,14 +22,15 @@ def process(stockList):
         for stockClass in stockClassList:
             stockClass.scanNextOpportunity()
     for stockClass in stockClassList:
-        if stockClass.currentPosition == "sold":
-            continue
-        else:
+        if stockClass.currentPosition == "bought":
             stockClass.sell()
+        else:
+            print(stockClass.ticker + " was already sold or never purchased")
 
 
 def isHammer(firstBar, secondBar):
-    if firstBar["Close"] > secondBar["Open"] and firstBar["Open"] <= secondBar["Close"]:
+    #firstbar bullish and secondbar bearish
+    if firstBar["Close"][0] > secondBar["Open"][0] > secondBar["Close"][0] >= firstBar["Open"][0]:
         return True
     else:
         return False
@@ -53,19 +54,28 @@ class Stock:
         self.tenSMA = False
 
     def fetchCurrentPrice(self):
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY" \
+        """url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY" \
               "&symbol=" + self.ticker + "&interval=1min&apikey=ZA0L5BE0MXAE37QV"
         resp = requests.get(url)
         data = resp.json()
-        openPrice = data[0]['Meta Data']['Time Series (1min)'][0]['1. open']
-        closePrice = data[0]['Meta Data']['Time Series (1min)'][0]['4. close']
+        openPrice, closePrice = 0, 0
+        print(data)
+        for dummy, candle in data["Time Series (1min)"].items():
+            openPrice = float(candle['1. open'])
+            closePrice = float(candle["4. close"])
+            print(openPrice)
+            print(closePrice)
+            break"""
+        minutesCandles = self.fetchHistoricData("1d", "1m")
+        openPrice = minutesCandles.iloc[[-1]]["Open"][0]
+        closePrice = minutesCandles.iloc[[-1]]["Close"][0]
         currentPrice = (openPrice+closePrice)/2
         return currentPrice
 
     def fetchHistoricData(self, period, interval):
         stockInfo = yf.Ticker(self.ticker)
         stockHistory = stockInfo.history(period=period, interval=interval)
-        print(stockHistory.iloc[[-1]]["Open"])
+        #print(stockHistory.iloc[[-1]]["Open"])
         return stockHistory
 
     def buy(self):
@@ -82,11 +92,11 @@ class Stock:
         runningSum = 0
         i = 1
         while i < period:
-            runningSum += stockPrices.iloc[[i]]["Close"]
+            runningSum += stockPrices.iloc[[i]]["Close"][0]
             i += 1
         runningSum += currentPrice
         movingAverage = runningSum / period
-        print(movingAverage)
+        #print(movingAverage)
         return movingAverage
 
     def buySignal(self):
@@ -177,7 +187,23 @@ if __name__ == '__main__':
     stockString = input("Enter the stocks to watch: ")
     stockListInput = stockString.split()
     t = threading.Thread(target=exitInput)
-    process(stockListInput)
     t.start()
+    process(stockListInput)
+"""
+    url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY" \
+          "&symbol=AAPL&interval=1min&apikey=ZA0L5BE0MXAE37QV"
+    resp = requests.get(url)
+    data = resp.json()
+    openPrice, closePrice = 0, 0
+    for dummy, candle in data["Time Series (1min)"].items():
+        openPrice = float(candle['1. open'])
+        closePrice = float(candle["4. close"])
+        print(openPrice)
+        print(closePrice)
+        break
+    currentPrice = (openPrice + closePrice) / 2
+    print(currentPrice)
+    print(data["Time Series (1min)"])
+    """
 
 
