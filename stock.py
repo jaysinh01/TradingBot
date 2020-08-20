@@ -1,6 +1,7 @@
 import yfinance as yf
 import requests
 import threading
+from alpacaAPI import *
 
 exitFlag = False
 
@@ -66,10 +67,12 @@ class Stock:
             print(openPrice)
             print(closePrice)
             break"""
-        minutesCandles = self.fetchHistoricData("1d", "1m")
+        """minutesCandles = self.fetchHistoricData("1d", "1m")
         openPrice = minutesCandles.iloc[[-1]]["Open"][0]
         closePrice = minutesCandles.iloc[[-1]]["Close"][0]
-        currentPrice = (openPrice+closePrice)/2
+        currentPrice = (openPrice+closePrice)/2"""
+        previousQuote = getLastQuote(self.ticker)
+        currentPrice = (previousQuote.askprice + previousQuote.bidprice)/2
         return currentPrice
 
     def fetchHistoricData(self, period, interval):
