@@ -51,6 +51,8 @@ class Stock:
         self.stopLoss = 0
         self.target = 0
         self.history = {}
+        #consists of order classes
+        self.order = []
         self.twentySMA = False
         self.tenSMA = False
 
@@ -133,12 +135,19 @@ class Stock:
         return False
 
     def scanNextOpportunity(self):
-        if self.currentPosition == "bought":
+        # Before: only one buy opportunity
+        # Now: Scans for buy in opportunity every scan
+        if self.buySignal():
+            self.buy()
+        elif self.currentPosition == "bought":
             if self.sellSignal():
                 self.sell()
         else:
-            if self.buySignal():
-                self.buy()
+            self.isStockBought()
+            self.scanNextOpportunity()
+
+    def isStockBought(self):
+
 
 
 """

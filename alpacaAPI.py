@@ -6,4 +6,4 @@ api = tradeapi.REST(API_KEY_ID, API_SECRET_KEY, base_url='https://paper-api.alpa
 def getLastQuote(symbol):
     return api.get_last_quote(symbol)
 
-print((getLastQuote("AAPL").askprice + getLastQuote("AAPL").bidprice) )
+print((getLastQuote("AAPL").askprice + getLastQuote("AAPL").bidprice))
