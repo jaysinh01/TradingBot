@@ -48,11 +48,13 @@ class Stock:
     def __init__(self, ticker):
         self.ticker = ticker
         self.currentPosition = "idle"
-        self.stopLoss = 0
-        self.target = 0
+        self.orderCounter =  0
+        #self.stopLoss = 0
+        #self.target = 0
         self.history = {}
         #consists of order classes
-        self.order = []
+        self.orderBuy = []
+        self.orderSell = []
         self.twentySMA = False
         self.tenSMA = False
 
@@ -85,11 +87,27 @@ class Stock:
 
     def buy(self):
         self.currentPosition = "bought"
-        print("Bought at " + str(self.fetchCurrentPrice()))
+        print("Placed a buy order for " + str(self.fetchCurrentPrice()))
+        client_order_id = self.ticker + str(self.orderCounter)
+        self.orderCounter += 1
+        placeOrder(self.ticker, 10, "buy", "limit", "day", self.fetchCurrentPrice(), client_order_id)
+        self.orderBuy.append(getUpdatedOrder(client_order_id))
 
     def sell(self):
         self.currentPosition = "sold"
-        print("Sold at " + str(self.fetchCurrentPrice()))
+        print("Placed a sell order for " + str(self.fetchCurrentPrice()))
+        for order in self.orderBuy:
+            updatedOrder = getUpdatedOrder(order.client_order_id)
+            if updatedOrder.filled_qty > 0:
+                client_order_id = self.ticker + str(self.orderCounter)
+                self.orderCounter += 1
+                placeOrder(self.ticker, updatedOrder.filled_qty, "sell", "limit", "day", self.fetchCurrentPrice(), client_order_id)
+                self.orderSell.append(getUpdatedOrder(client_order_id))
+            else:
+                cancelOrder(updatedOrder.client_order_id)
+                self.orderSell.append(updatedOrder)
+
+
 
     def calculateSMA(self, period, currentPrice):
         periodString = str(period) + "d"
@@ -139,16 +157,9 @@ class Stock:
         # Now: Scans for buy in opportunity every scan
         if self.buySignal():
             self.buy()
-        elif self.currentPosition == "bought":
+        if self.currentPosition == "bought":
             if self.sellSignal():
                 self.sell()
-        else:
-            self.isStockBought()
-            self.scanNextOpportunity()
-
-    def isStockBought(self):
-
-
 
 """
 def buyingSetup(ticker):
